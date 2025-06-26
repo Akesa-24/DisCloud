@@ -1,9 +1,12 @@
 import base64
 import os
 import math
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+from encryption.encryption import encrypt
 
 CHUNK_SIZE_MB = 10
-CHUNK_SIZE = CHUNK_SIZE_MB * 1024 * 1000 # in bytes, 1000 bc discord is being bitchy and not accurate
+CHUNK_SIZE = CHUNK_SIZE_MB * 1024 * 1000  # 1000-based MB due to Discord
 
 def split_file_to_txt(input_file, output_prefix="part"):
     with open(input_file, "rb") as f:
@@ -18,11 +21,16 @@ def split_file_to_txt(input_file, output_prefix="part"):
 
     for i in range(num_parts):
         chunk = b64_data[i * CHUNK_SIZE:(i + 1) * CHUNK_SIZE]
+
+        header = f"--{base_name}--PART {i+1}/{num_parts}--\n"
+        full_text = header + chunk
+
+        # Encrypt
+        encrypted_data = encrypt(full_text.encode('utf-8'))
+
         part_filename = f"{output_prefix}_{i+1:03}.txt"
-        with open(part_filename, "w") as out:
-            # Add header with part info
-            out.write(f"--{base_name}--PART {i+1}/{num_parts}--\n")
-            out.write(chunk)
+        with open(part_filename, "wb") as encrypted_file:
+            encrypted_file.write(encrypted_data)
 
     print("Done.")
 
