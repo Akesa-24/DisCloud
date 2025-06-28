@@ -38,6 +38,6 @@ def split_file_to_txt(input_file, output_prefix="part"):
 if __name__ == "__main__":
     import sys
     if len(sys.argv) != 2:
-        print("Usage: python split_file_to_txt.py your_file.ext")
+        print("Usage: python split_file_to_txt.py your_file.txt")
     else:
         split_file_to_txt(sys.argv[1])

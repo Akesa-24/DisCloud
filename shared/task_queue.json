@@ -1,0 +1,14 @@
+[
+  {
+    "task": "send",
+    "channel_id": 1388302333015888032,
+    "filename": "placeholder.txt",
+    "content": "This is a placeholder message for DisCloud."
+
+
+  },
+  {
+    "task": "read",
+    "channel_id": 1388302333015888032
+  }
+]
