@@ -1,14 +1,20 @@
 import base64
+import json
 import os
 import math
 import sys
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from encryption.encryption import encrypt
 
-CHUNK_SIZE_MB = 10
-CHUNK_SIZE = CHUNK_SIZE_MB * 1024 * 1000  # 1000-based MB due to Discord
+CHUNK_SIZE_MB = 7
+CHUNK_SIZE = CHUNK_SIZE_MB * 1024 * 1024  # 1000-based MB due to Discord
+SAVE_PATH = "C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\to_send"
+QUEUE_PATH = "C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\shared\\task_queue.json"
 
-def split_file_to_txt(input_file, output_prefix="part"):
+input_file = sys.argv[1]
+input_file = os.path.abspath(input_file)
+
+def split_file_to_txt(input_file = input_file, output_prefix="part"):
     with open(input_file, "rb") as f:
         raw_data = f.read()
 
@@ -29,10 +35,41 @@ def split_file_to_txt(input_file, output_prefix="part"):
         encrypted_data = encrypt(full_text.encode('utf-8'))
 
         part_filename = f"{output_prefix}_{i+1:03}.txt"
-        with open(part_filename, "wb") as encrypted_file:
+        out_path = os.path.join(SAVE_PATH, part_filename)
+
+        with open(out_path, "wb") as encrypted_file:
             encrypted_file.write(encrypted_data)
 
-    print("Done.")
+        new_task = {}
+        new_task["task"] = "send"
+        new_task["channel_id"] = 1388302333015888032
+        new_task["filename"] = part_filename
+        new_task["path"] = out_path
+        append_to_json_file(QUEUE_PATH, new_task)
+
+    print("Done encoding and splitting and updating .json file.")
+
+
+
+def append_to_json_file(path, new_entry):
+    if not os.path.exists(path):
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump([], f)
+
+    with open(path, "r+", encoding="utf-8") as f:
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError:
+            data = []
+
+        if not isinstance(data, list):
+            raise ValueError("JSON file must contain a list at the top level.")
+
+        data.append(new_entry)
+
+        f.seek(0)
+        f.truncate()
+        json.dump(data, f, indent=2)
 
 # Example usage
 if __name__ == "__main__":
@@ -40,4 +77,4 @@ if __name__ == "__main__":
     if len(sys.argv) != 2:
         print("Usage: python split_file_to_txt.py your_file.txt")
     else:
-        split_file_to_txt(sys.argv[1])
+        split_file_to_txt()

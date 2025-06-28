@@ -1,0 +1,23 @@
+[
+  {
+    "task": "send",
+    "channel_id": 1388302333015888032,
+    "filename": "part_001.txt",
+    "content": "This is a placeholder message for DisCloud."
+
+
+  },
+  {
+    "task": "send",
+    "channel_id": 1388302333015888032,
+    "filename": "part_002.txt",
+    "content": "This is a placeholder message for DisCloud."
+
+
+  },
+  {
+    "task": "read",
+    "text_pattern": "part_*.txt",
+    "channel_id": 1388302333015888032
+  }
+]

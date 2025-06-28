@@ -1,3 +1,4 @@
+import glob
 from fileinput import filename
 
 import discord
@@ -33,7 +34,6 @@ async def task_watcher():
         return
 
     with open(QUEUE_PATH, "r+", encoding="utf-8") as f:
-        print("in Queue path")
         try:
             tasks_list = json.load(f)
             print(tasks_list)
@@ -68,12 +68,17 @@ async def handle_send(task):
         print("Channel not found")
         return
 
-    content = task["content"]
+
     filename = task.get("filename", "message.txt")
 
-    temp_file = io.BytesIO(content.encode("utf-8"))
+    with open(task["path"], "rb") as f:
+        temp_file = f.read()
+
+
+    file_to_send = io.BytesIO(temp_file)
     print('Sending')
-    await channel.send(file=discord.File(temp_file, filename=filename))
+    await channel.send(file=discord.File(file_to_send, filename=filename))
+    os.remove(task["path"])
 
 async def handle_read(task):
     channel = bot.get_channel(task["channel_id"])
@@ -81,15 +86,27 @@ async def handle_read(task):
         print("Channel not found")
         return
 
-    async for msg in channel.history(limit=50):
+    text_pattern = task["text_pattern"]
+    save_path = "C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\read"
+    os.makedirs(save_path, exist_ok=True)
+
+    matched = 0
+    async for msg in channel.history(limit=20000000):
         for attachment in msg.attachments:
-            if attachment.filename.endswith(".txt"):
+            if attachment.filename.endswith(".txt") and glob.fnmatch.fnmatch(attachment.filename, text_pattern):
                 data = await attachment.read()
                 content = data.decode("utf-8")
-                # write output to file
-                with open(f"C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\read\\{attachment.filename}", "w", encoding="utf-8") as f:
+
+                out_path = os.path.join(save_path, attachment.filename)
+                with open(out_path, "w", encoding="utf-8") as f:
                     f.write(content)
-                print(f"C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\read\\{attachment.filename}")
-                return
+
+                print(f"Saved: {out_path}")
+                matched += 1
+
+    if matched == 0:
+        print(f"No files matching pattern '{text_pattern}' found.")
+    else:
+        print(f"Downloaded {matched} file(s) matching '{text_pattern}'.")
 
 bot.run(TOKEN)
