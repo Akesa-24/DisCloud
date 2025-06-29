@@ -8,13 +8,16 @@ from encryption.encryption import encrypt
 
 CHUNK_SIZE_MB = 7
 CHUNK_SIZE = CHUNK_SIZE_MB * 1024 * 1024  # 1000-based MB due to Discord
-SAVE_PATH = "C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\to_send"
-QUEUE_PATH = "C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\shared\\task_queue.json"
+SAVE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "to_send"))
+QUEUE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "shared/task_queue.json"))
 
-input_file = sys.argv[1]
-input_file = os.path.abspath(input_file)
 
-def split_file_to_txt(input_file = input_file, output_prefix="part"):
+
+def split_file_to_txt(input_file = '', output_prefix="part"):
+    if input_file == '':
+        input_file = sys.argv[1]
+        input_file = os.path.abspath(input_file)
+
     with open(input_file, "rb") as f:
         raw_data = f.read()
 
@@ -34,7 +37,7 @@ def split_file_to_txt(input_file = input_file, output_prefix="part"):
         # Encrypt
         encrypted_data = encrypt(full_text.encode('utf-8'))
 
-        part_filename = f"{output_prefix}_{i+1:03}.txt"
+        part_filename = f"{base_name[0:-4]}_{output_prefix}_{i+1:03}.txt"
         out_path = os.path.join(SAVE_PATH, part_filename)
 
         with open(out_path, "wb") as encrypted_file:
@@ -73,8 +76,7 @@ def append_to_json_file(path, new_entry):
 
 # Example usage
 if __name__ == "__main__":
-    import sys
     if len(sys.argv) != 2:
         print("Usage: python split_file_to_txt.py your_file.txt")
     else:
-        split_file_to_txt()
+        split_file_to_txt(input_file="C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\encoding\\DSFC7201_4.mp4")

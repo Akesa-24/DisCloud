@@ -18,6 +18,7 @@ intents.messages = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 QUEUE_PATH = "C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\shared\\task_queue.json"
+save_path = "C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\read"
 
 @bot.event
 async def on_ready():
@@ -87,7 +88,7 @@ async def handle_read(task):
         return
 
     text_pattern = task["text_pattern"]
-    save_path = "C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\read"
+
     os.makedirs(save_path, exist_ok=True)
 
     matched = 0
