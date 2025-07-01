@@ -143,10 +143,12 @@ async def handle_delete(task):
     async for msg in channel.history(limit=20000000):
         for attachment in msg.attachments:
             if attachment.filename.endswith(".txt") and glob.fnmatch.fnmatch(attachment.filename, text_pattern):
-
-                await msg.delete()
-                print(f"Deleted: {attachment.filename}")
-                matched += 1
+                try:
+                    await msg.delete()
+                    matched += 1
+                    print(f"Deleted batch: {matched}")
+                except discord.errors.NotFound:
+                    pass # Maybe update handle delete if im smart but it still works fineeeee
     if matched == 0:
         print(f"No messages matching pattern '{text_pattern}' found.")
     else:
