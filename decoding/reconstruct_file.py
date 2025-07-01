@@ -56,8 +56,3 @@ def reconstruct_file(file_name=None, txt_pattern=None):
         out.write(raw_data)
 
     print(f"Reconstructed file: {output_path}")
-
-
-
-
-reconstruct_file(file_name="DSFC7201_4")

@@ -19,5 +19,10 @@
     "task": "read",
     "text_pattern": "part_*.txt",
     "channel_id": 1388302333015888032
+  },
+    {
+    "task": "delete",
+    "text_pattern": "5min_stock_original",
+    "channel_id": 1388302333015888032
   }
 ]
