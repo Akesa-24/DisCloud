@@ -43,12 +43,12 @@ def split_file_to_txt(input_file = '', output_prefix="part"):
         with open(out_path, "wb") as encrypted_file:
             encrypted_file.write(encrypted_data)
 
-        new_task = {}
-        new_task["task"] = "send"
-        new_task["channel_id"] = 1388302333015888032
-        new_task["filename"] = part_filename
-        new_task["path"] = out_path
-        append_to_json_file(QUEUE_PATH, new_task)
+    new_task = {}
+    new_task["task"] = "send"
+    new_task["channel_id"] = 1388302333015888032
+    new_task["filename"] = f"{base_name[:-4]}_part_XXX"
+    new_task["path"] = SAVE_PATH
+    append_to_json_file(QUEUE_PATH, new_task)
 
     print("Done encoding and splitting and updating .json file.")
 

@@ -17,8 +17,8 @@ intents.message_content = True
 intents.messages = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
-QUEUE_PATH = "C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\shared\\task_queue.json"
-save_path = "C:\\Users\\Lenovo\\Documents\\GitHub\\DisCloud\\read"
+QUEUE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "shared/task_queue.json"))
+SAVE_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "read"))
 
 @bot.event
 async def on_ready():
@@ -51,7 +51,7 @@ async def task_watcher():
             elif task["task"] == "read":
                 await handle_read(task)
             elif task["task"] == "delete":
-                pass #TODO
+                await handle_delete(task)
 
             else:
                 print("Unknown task:", task)
@@ -63,23 +63,42 @@ async def task_watcher():
         json.dump(remaining_tasks, f, indent=2)
 
 async def handle_send(task):
-    print('Handling sending')
+    print("Handling sending")
     channel = bot.get_channel(task["channel_id"])
     if not channel:
         print("Channel not found")
         return
 
+    base_filename = task.get("filename", "message.txt")
+    base_name_prefix = "_".join(base_filename.split("_")[:-1])  # remove _part_XXX
 
-    filename = task.get("filename", "message.txt")
+    # Match all part files
+    pattern = os.path.join(task["path"], f"{base_name_prefix}_*.txt")
+    file_paths = sorted(glob.glob(pattern))
 
-    with open(task["path"], "rb") as f:
-        temp_file = f.read()
+    if not file_paths:
+        print(f"No files matching {pattern}")
+        return
 
+    print(f"Sending {len(file_paths)} files in chunks of 10...")
 
-    file_to_send = io.BytesIO(temp_file)
-    print('Sending')
-    await channel.send(file=discord.File(file_to_send, filename=filename))
-    os.remove(task["path"])
+    # Send files in batches of 10
+    while file_paths:
+        batch_paths = file_paths[:10]
+        file_paths = file_paths[10:]
+
+        files_to_send = []
+        for path in batch_paths[::-1]:
+            with open(path, "rb") as f:
+                files_to_send.append(discord.File(io.BytesIO(f.read()), filename=os.path.basename(path)))
+
+        await channel.send(content=f"📄 Sending parts of `{base_name_prefix}`", files=files_to_send)
+
+        # Remove files after sending
+        for path in batch_paths:
+            os.remove(path)
+        print(f" Sent and deleted batch: {[os.path.basename(p) for p in batch_paths]}")
+
 
 async def handle_read(task):
     channel = bot.get_channel(task["channel_id"])
@@ -89,7 +108,7 @@ async def handle_read(task):
 
     text_pattern = task["text_pattern"]
 
-    os.makedirs(save_path, exist_ok=True)
+    os.makedirs(SAVE_PATH, exist_ok=True)
 
     matched = 0
     async for msg in channel.history(limit=20000000):
@@ -98,7 +117,7 @@ async def handle_read(task):
                 data = await attachment.read()
                 content = data.decode("utf-8")
 
-                out_path = os.path.join(save_path, attachment.filename)
+                out_path = os.path.join(SAVE_PATH, attachment.filename)
                 with open(out_path, "w", encoding="utf-8") as f:
                     f.write(content)
 
@@ -109,5 +128,29 @@ async def handle_read(task):
         print(f"No files matching pattern '{text_pattern}' found.")
     else:
         print(f"Downloaded {matched} file(s) matching '{text_pattern}'.")
+
+async def handle_delete(task):
+    channel = bot.get_channel(task["channel_id"])
+    if not channel:
+        print("Channel not found")
+        return
+
+    text_pattern = task["text_pattern"]
+    text_pattern = f"{text_pattern}_part_*"
+    os.makedirs(SAVE_PATH, exist_ok=True)
+
+    matched = 0
+    async for msg in channel.history(limit=20000000):
+        for attachment in msg.attachments:
+            if attachment.filename.endswith(".txt") and glob.fnmatch.fnmatch(attachment.filename, text_pattern):
+
+                await msg.delete()
+                print(f"Deleted: {attachment.filename}")
+                matched += 1
+    if matched == 0:
+        print(f"No messages matching pattern '{text_pattern}' found.")
+    else:
+        print(f"Deleted {matched} message(s) matching '{text_pattern}'.")
+
 
 bot.run(TOKEN)
