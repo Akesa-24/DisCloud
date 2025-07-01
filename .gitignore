@@ -2,3 +2,4 @@
 *.mp4
 *.iml
 bot_setup/.env
+*.pyc
