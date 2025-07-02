@@ -18,6 +18,7 @@ def reconstruct_file(file_name=None, txt_pattern=None):
         txt_pattern = "part_*.txt"
 
     print(txt_pattern)
+    txt_pattern = txt_pattern.replace(' ', '_')
     search_path = os.path.join(READ_FOLDER, txt_pattern)
     print(f"Searching for: {search_path}")
     print("Files in read/:")

@@ -113,6 +113,7 @@ async def handle_read(task):
     matched = 0
     async for msg in channel.history(limit=20000000):
         for attachment in msg.attachments:
+            text_pattern = text_pattern.replace(' ', '_')
             if attachment.filename.endswith(".txt") and glob.fnmatch.fnmatch(attachment.filename, text_pattern):
                 data = await attachment.read()
                 content = data.decode("utf-8")
@@ -140,7 +141,7 @@ async def handle_delete(task):
     os.makedirs(SAVE_PATH, exist_ok=True)
 
     matched = 0
-    async for msg in channel.history(limit=20000000):
+    async for msg in channel.history(limit=2000000000):
         for attachment in msg.attachments:
             if attachment.filename.endswith(".txt") and glob.fnmatch.fnmatch(attachment.filename, text_pattern):
                 try:

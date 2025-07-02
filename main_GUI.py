@@ -6,11 +6,15 @@ import glob
 import time
 from encoding.encoding_to_base64 import split_file_to_txt, append_to_json_file
 from decoding.reconstruct_file import reconstruct_file
+import tkinter.filedialog as fd
 
 QUEUE_PATH = "shared/task_queue.json"
 READ_FOLDER = "read"
 CHANNEL_ID = 1388302333015888032
 FILE_LIST_PATH = "shared/file_list.json"
+summary_label = None
+
+
 
 def handle_download(filename):
     messagebox.showinfo("Download", f"Downloading: {filename}")
@@ -21,10 +25,10 @@ def handle_download(filename):
         "text_pattern": f"{file_prefix}_part_*.txt"
     }
     append_to_json_file(QUEUE_PATH, task)
-    messagebox.showinfo("Waiting", f"Read request sent. Waiting for '{file_prefix}_part_001.txt'...")
+    # messagebox.showinfo("Waiting", f"Read request sent. Waiting for '{file_prefix}_part_001.txt'...")
 
     if wait_for_read_files(file_prefix):
-        time.sleep(1)
+        time.sleep(0.01)
         reconstruct_file(file_name=file_prefix)
         messagebox.showinfo("Success", f"File '{file_prefix}' downloaded successfully.")
     else:
@@ -42,30 +46,29 @@ def handle_delete(filename):
             with open(FILE_LIST_PATH, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
             refresh_gui()
-            messagebox.showinfo("Deleted", f"{filename} removed from file list.")
+            file_prefix = filename.split(".")[0]
+            task = {
+                "task": "delete",
+                "channel_id": CHANNEL_ID,
+                "text_pattern": f"{file_prefix}"
+            }
+            append_to_json_file(QUEUE_PATH, task)
+            messagebox.showinfo("Deleted", f"{filename} deleted and removed from file list.")
         except Exception as e:
             messagebox.showerror("Error", f"Could not delete: {e}")
 
-    file_prefix = filename.split(".")[0]
-    task = {
-        "task": "delete",
-        "channel_id": CHANNEL_ID,
-        "text_pattern": f"{file_prefix}"
-    }
-    append_to_json_file(QUEUE_PATH, task)
-    messagebox.showinfo("Waiting", f"Delete request sent. '...")
-    messagebox.showinfo("Success", f"File '{file_prefix}' deleted successfully.")
+
+    # messagebox.showinfo("Waiting", f"Delete request sent. '...")
+    # messagebox.showinfo("Success", f"File '{file_prefix}' deleted successfully.")
 
 
 
 def handle_upload():
-    import tkinter.filedialog as fd
     file_path = fd.askopenfilename(title="Select file to upload")
     if not file_path:
         return
 
     try:
-        from encoding.encoding_to_base64 import split_file_to_txt, append_to_json_file
         split_file_to_txt(file_path)
 
         file_entry = {
@@ -88,7 +91,7 @@ def handle_upload():
                 json.dump(data, f, indent=2)
 
         refresh_gui()
-        messagebox.showinfo("Uploaded", f"{file_entry['filename']} uploaded and added to list.")
+        #messagebox.showinfo("Uploaded", f"{file_entry['filename']} uploaded and added to list.")
     except Exception as e:
         messagebox.showerror("Upload Error", f"An error occurred:\n{e}")
 
@@ -120,6 +123,12 @@ def refresh_gui():
         widget.destroy()
 
     file_list = load_file_list()
+    total_size = sum(file.get("original_size", 0) for file in file_list)
+    count = len(file_list)
+
+    if summary_label:
+        summary_label.config(text=f"Total files stored: {count} | Total size: {format_size(total_size)}")
+
     for file_info in file_list:
         filename = file_info.get("filename", "unknown.txt")
         size = file_info.get("original_size", 0)
@@ -137,16 +146,18 @@ def refresh_gui():
         del_btn.pack(side="left", padx=5)
 
 
-def wait_for_read_files(file_prefix, timeout=60):
+def wait_for_read_files(file_prefix, timeout=6000):
     pattern = os.path.join(READ_FOLDER, f"{file_prefix}_part_*.txt")
     waited = 0
 
     print(f" Waiting for '{file_prefix}_part_001.txt' to appear in 'read/'...")
-    # Was running into problem where i would try reconstruct the file before all the parts arrived
+    # Was running into a problem where i would try reconstruct the file before all the parts arrived
     # Figured it was easier to make it so 001 would always arrive last and then wait for that (probably stupid)
 
 
     while waited < timeout:
+        print(f"Pattern: {pattern}")
+        pattern = pattern.replace(" ", "_")
         matches = glob.glob(pattern)
         has_first_part = any(name.endswith("_part_001.txt") for name in matches)
 
@@ -177,6 +188,9 @@ def main():
 
     upload_btn = ttk.Button(root, text="Upload File", command=handle_upload)
     upload_btn.pack(pady=10)
+    global summary_label
+    summary_label = ttk.Label(root, text="Loading...", font=("Segoe UI", 10, "bold"))
+    summary_label.pack()
 
     container = ttk.Frame(root)
     container.pack(fill="both", expand=True)
