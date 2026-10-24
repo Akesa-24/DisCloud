@@ -1,0 +1,23 @@
+# Secrets
+.env
+*.key
+
+# Runtime data
+read/
+to_send/
+downloads/
+shared/task_queue.json
+shared/file_list.json
+*.log
+
+# Python / IDE
+__pycache__/
+*.pyc
+.venv/
+.idea/
+*.mp4
+
+# PyInstaller
+build/
+dist/
+*.spec
