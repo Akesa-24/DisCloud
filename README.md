@@ -41,3 +41,6 @@ A `secret.key` is generated on first run. **Back it up** – without it, uploade
 - The file list is stored locally, so another computer won't see what you uploaded (the files are still in the channel).
 - Downloads scan the whole channel history, so they get slower as the channel fills up.
 - Files are loaded fully into memory while encrypting, so very large files need a lot of RAM.
+
+## Note
+- This is an old project of mine that I did for fun. Polished and updated in one day so I could make new repository that didn't have the history with my API key in it (tehe) (thank god discord bot scrapers work FAST)
